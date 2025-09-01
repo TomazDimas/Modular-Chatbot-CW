@@ -8,6 +8,7 @@ from ..domain.schemas import AgentStep, ChatRequest, ChatResponse
 from ..agents.router_llm import RouterAgentLLM
 from ..agents.math_llm import MathAgentLLM
 from ..agents.math_parser import MathError
+from ..agents.knowledge_redis import KnowledgeAgentRedis
 
 log = structlog.get_logger()
 
@@ -32,7 +33,7 @@ class ChatService:
 
         try:
             router_agent = RouterAgentLLM()
-            router_args = router.decide(req.message)
+            router_args = router_agent.decide(req.message)
 
             if isinstance(router_args, dict) and "route" in router_args:
                 decision = router_args.get("route", "KnowledgeAgent")
@@ -75,9 +76,11 @@ class ChatService:
                 source_text = "MathAgent (LLM+AST)"
                 summary = {"expr": req.message, "error": str(e)}
         else:
-            agent_text = "(mock) KnowledgeAgent answer based on RAG"
-            source_text = "(mock) Sources: https://ajuda.infinitepay.io/pt-BR/..."
-            summary = {"sources": ["https://ajuda.infinitepay.io/pt-BR/"]}
+            agent = KnowledgeAgentRedis()
+            result = agent.run(req.message)
+            agent_text = result["text"]
+            source_text = f"Sources: {result['meta']['sources']}"
+            summary = {"sources": result["meta"]["retrieved"], "llm_ms": result["meta"]["llm_ms"]}
 
         agent_ms = int((time.time() - t_agent) * 1000)
         workflow.append(AgentStep(agent=decision))
@@ -117,7 +120,7 @@ class ChatService:
         ).msg("chat_request_done")
 
         return ChatResponse(
-            response="Here is the answer with personality.",
-            source_agent_response=agent_text if decision == "MathAgent" else source_text,
+            response=agent_text,
+            source_agent_response=source_text,
             agent_workflow=workflow,
         )

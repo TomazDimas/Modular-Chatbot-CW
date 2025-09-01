@@ -53,5 +53,4 @@ class RouterAgentLLM:
             route = "MathAgent" if any(t in message.lower() for t in ["+", "-", "*", "/", " x ", "vezes", "quanto é"]) else "KnowledgeAgent"
             args = {"route": route, "confidence": 0.5, "reason": "fallback_rule"}
         log.bind(level="INFO", agent=self.name, decision=args.get("route"), confidence=args.get("confidence"), reason=args.get("reason")).msg("route_decision")
-        log.bind(level="DEBUG", agent="RouterAgent", out_args=args).msg("router_llm_raw")
         return args
