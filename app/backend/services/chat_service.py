@@ -110,6 +110,25 @@ class ChatService:
                 error=str(e),
             ).msg("redis_write_failed")
 
+        try:
+            r.sadd(f"user:{req.user_id}:conversations", req.conversation_id)
+
+            preview = (agent_text or "")[:140]
+            r.hset(f"conversation_meta:{req.conversation_id}", mapping={
+                "user_id": req.user_id,
+                "title": f"Chat {req.conversation_id[:8]}",
+                "last_message_preview": preview,
+                "updated_at": str(int(time.time() * 1000)),
+            })
+        except Exception as e:
+            log.bind(
+                level="ERROR",
+                agent="Storage",
+                conversation_id=req.conversation_id,
+                user_id=req.user_id,
+                error=str(e),
+            ).msg("redis_meta_failed")
+
         total_ms = int((time.time() - t0) * 1000)
         log.bind(
             level="INFO",
