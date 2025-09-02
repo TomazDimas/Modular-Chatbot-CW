@@ -42,5 +42,4 @@ yarn-error.log*
 .env.*.local
 
 # --- Kubernetes / Compose ---
-# (os manifests em YAML você versiona! só ignore secrets)
 secrets/*.yaml

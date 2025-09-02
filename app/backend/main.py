@@ -1,6 +1,9 @@
 from __future__ import annotations
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import JSONResponse
 
 from .core.config import settings
 from .core.logging_conf import setup_logging

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-stack
+  namespace: cw-chat
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: redis-stack }
+  template:
+    metadata:
+      labels: { app: redis-stack }
+    spec:
+      containers:
+        - name: redis
+          image: redis/redis-stack:7.2.0-v10
+          ports:
+            - containerPort: 6379
+            - containerPort: 8001 # UI opcional
+          # liveness/readiness simples
+          readinessProbe:
+            tcpSocket: { port: 6379 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket: { port: 6379 }
+            initialDelaySeconds: 10
+            periodSeconds: 10

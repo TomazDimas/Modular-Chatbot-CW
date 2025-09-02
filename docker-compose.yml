@@ -1,21 +1,21 @@
+version: "3.9"
 services:
-  redis:
-    image: redis/redis-stack:7.2.0-v10
-    ports: ["6380:6379", "8001:8001"]
-    volumes: ["redis-data:/data"]
-
   backend:
-    build: ./app/backend
-    env_file: .env
-    ports: ["8000:8000"]
-    depends_on: [redis]
-
+    image: docker.io/tomazdimas/chatbot-backend:v2
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
   frontend:
     build: ./app/frontend
-    ports: ["3000:80"]
-    environment:
-      - VITE_API_BASE=http://backend:8000
-    depends_on: [backend]
-
-volumes:
-  redis-data:
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+  redis:
+    image: redis/redis-stack:7.2.0-v10
+    ports:
+      - "6379:6379"
+      - "8001:8001" # painel RedisInsight

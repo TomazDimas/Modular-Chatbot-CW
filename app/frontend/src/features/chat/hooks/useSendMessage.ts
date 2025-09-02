@@ -3,7 +3,7 @@ import { conversationKey } from "./useConversation";
 import type { ChatRequest, HistoryItem } from "../types";
 import { sendChat } from "../../../api/chat";
 
-export function useSendMessage(convId: string, userId: string) {
+export function useSendMessage(convId: string) {
   const qc = useQueryClient();
 
   return useMutation({

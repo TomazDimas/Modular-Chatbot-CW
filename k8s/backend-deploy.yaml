@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot-backend
+  namespace: cw-chat
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: chatbot-backend }
+  template:
+    metadata:
+      labels: { app: chatbot-backend }
+    spec:
+      containers:
+        - name: backend
+          image: <seuuser>/chatbot-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef: { name: chatbot-config }
+            - secretRef: { name: chatbot-secrets }
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10

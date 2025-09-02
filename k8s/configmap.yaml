@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chatbot-config
+  namespace: cw-chat
+data:
+  REDIS_URL: "redis://redis-stack:6379"
+  MATH_LLM_MODEL: "gpt-4o-mini"
+  KNOWLEDGE_TOPK: "4"
+
+  PUBLIC_API_BASE: "http://chatbot-backend:8000"

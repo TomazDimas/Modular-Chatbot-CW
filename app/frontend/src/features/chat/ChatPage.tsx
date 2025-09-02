@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import ChatWindow from "./components/ChatWindow";
 import Composer from "./components/Composer";
 import { useConversation } from "./hooks/useConversation";
 import { useSendMessage } from "./hooks/useSendMessage";
 import type { HistoryItem } from "./types";
 import { useConversationsList } from "./hooks/useConversationsList";
-import { getOrCreateUserId } from "../../lib/user";
+import { getOrCreateUserId, newConversationId } from "../../lib/user";
 
 const USER_ID = getOrCreateUserId();
 
 export default function ChatPage() {
-  const [conversationId, setConversationId] = useState(
-    () => `conv-${uuidv4()}`
+  const [conversationId, setConversationId] = useState(() =>
+    newConversationId()
   );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
@@ -22,7 +21,7 @@ export default function ChatPage() {
     appendOptimistic,
     refetch,
   } = useConversation(conversationId);
-  const sendMutation = useSendMessage(conversationId, USER_ID);
+  const sendMutation = useSendMessage(conversationId);
   const convList = useConversationsList(USER_ID);
 
   async function onSend(text: string) {
