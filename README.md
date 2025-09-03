@@ -18,13 +18,21 @@ The stack includes:
 
 ---
 
+## 🖼️ Screens
+
+- Conversation view + sources
+- Multi-conversation sidebar
+
+---
+
 ## 🌐 Public Demo
 
-- **Frontend:** [https://...]()
-- **Backend:** [https://...]()
+- **Frontend:** [https://modular-chatbot-cw.vercel.app/](https://modular-chatbot-cw.vercel.app/)
+- **Backend:** [https://chatbot-backend-z6ga.onrender.com](https://chatbot-backend-z6ga.onrender.com)
 
-> Deployment was done using **Cloud Run (backend + Redis Cloud)** and **Vercel (frontend)**.
+> Deployment was done using **Render (backend + Redis Cloud)** and **Vercel (frontend)**.
 > Details can be found in the [Deployment](#-deployment) section.
+> The frontend is configured with `VITE_API_BASE=https://<your-backend-domain>`.
 
 ---
 
@@ -53,6 +61,8 @@ Backend (FastAPI)
 - **Logs:** Structured with `structlog` → includes agent name, latency, conversation_id, user_id, etc.
 - **Security:** Prompt-injection filter + AST parser for math.
 
+---
+
 ## 📦 Run Locally (Docker Compose)
 
 Requirements:
@@ -77,6 +87,26 @@ curl -X POST http://localhost:8000/api/chat \
   -H </span><span>"Content-Type: application/json"</span><span> \
   -d </span><span>'{"message":"2+2","user_id":"u1","conversation_id":"c1"}'</span><span>
 </span></span></code></div></div></pre>
+
+---
+
+## Environment variables table
+
+```md
+## 🔧 Environment Variables
+
+| Variable           | Where            | Example / Notes                                   |
+|--------------------|------------------|---------------------------------------------------|
+| `OPENAI_API_KEY`   | Backend          | OpenAI API key                                    |
+| `REDIS_URL`        | Backend          | `redis://localhost:6379/0` or `rediss://…:port/0` |
+| `KB_INDEX`         | Backend (opt)    | Default: `kb_idx`                                 |
+| `KB_PREFIX`        | Backend (opt)    | Default: `kb:doc:`                                |
+| `KB_TOP_K`         | Backend (opt)    | Default: `3`                                      |
+| `EMBED_MODEL`      | Backend (opt)    | Default: `text-embedding-3-small`                 |
+| `MATH_LLM_MODEL`   | Backend (opt)    | Default: `gpt-4o-mini`                            |
+| `ROUTER_LLM_MODEL` | Backend (opt)    | Default: `gpt-4o-mini`                            |
+| `VITE_API_BASE`    | Frontend build   | e.g. `https://<your-backend-domain>`              |
+```
 
 ---
 
@@ -164,17 +194,25 @@ Covers:
 
 ---
 
-## 📚 Knowledge Base
+## “How KB is built” (simple, actionable)
 
-The RAG knowledge base is built from InfinitePay’s Help Center.
+```md
+## 📚 Knowledge Base (RAG)
 
-Example ingestion:
+Content is fetched from InfinitePay Help Center, saved as markdown, embedded, and upserted into Redis (RediSearch).
 
-<pre class="overflow-visible!" data-start="4432" data-end="4554"><div class="contain-inline-size rounded-2xl relative bg-token-sidebar-surface-primary"><div class="sticky top-9"><div class="absolute end-0 bottom-0 flex h-9 items-center pe-2"><div class="bg-token-bg-elevated-secondary text-token-text-secondary flex items-center gap-4 rounded-sm px-2 font-sans text-xs"></div></div></div><div class="overflow-y-auto p-4" dir="ltr"><code class="whitespace-pre! language-bash"><span><span>python tools/build_kb_redis.py \
-  </span><span>"https://ajuda.infinitepay.io/pt-BR/articles/6645035-o-que-e-o-infinitetap"</span><span>
-</span></span></code></div></div></pre>
+Add/refresh content:
+```
 
-Indexed chunks are stored in Redis RediSearch (`kb_idx`).
+```bash
+# 1) Fetch pages to markdown (app/backend/data/knowledge/*.md)
+python tools/ingest_urls.py \
+  "https://ajuda.infinitepay.io/pt-BR/articles/6645035-o-que-e-o-infinitetap" \
+  "<add-more-help-center-urls-here>"
+
+# 2) Embed + upsert into Redis (uses OPENAI_API_KEY + REDIS_URL)
+python tools/build_kb_redis.py
+```
 
 ---
 
@@ -215,6 +253,21 @@ Indexed chunks are stored in Redis RediSearch (`kb_idx`).
 
 ---
 
+## 🚀 Deployment
+
+- **Backend:** Render (Docker)
+  - Dockerfile at repo root (`WORKDIR /app`, runs `uvicorn app.backend.main:app`)
+  - Env: `OPENAI_API_KEY`, `REDIS_URL`, etc.
+- **Frontend:** Vercel
+  - Build: `npm run build`
+  - Output: `dist`
+  - Env: `VITE_API_BASE=https://<backend>`
+
+- **Redis:** Redis Cloud (Free tier)
+  - `REDIS_URL=rediss://default:<pwd>@<host>:<port>/0`
+
+---
+
 ## ✅ Challenge Checklist
 
 - [X] RouterAgent (LLM + fallback)
@@ -227,7 +280,7 @@ Indexed chunks are stored in Redis RediSearch (`kb_idx`).
 - [X] Docker Compose
 - [X] Kubernetes (Deploy + Service + Ingress)
 - [X] README (documentation)
-- [ ] Public deployment link (Cloud Run + Vercel)
+- [X] Public deployment link (Cloud Run + Vercel)
 
 ---
 
