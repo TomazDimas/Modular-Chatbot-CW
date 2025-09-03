@@ -9,6 +9,7 @@ import structlog
 from openai import OpenAI
 
 from ..llm.client import OpenAILLMClient
+from redis.commands.search.query import Query
 
 log = structlog.get_logger()
 
@@ -35,8 +36,6 @@ def _embed_query(text: str) -> np.ndarray:
     return _normalize_rows(vec)
 
 def _knn_search(r: redis.Redis, qvec: np.ndarray, k: int) -> List[Dict[str, Any]]:
-    from redis.commands.search.query import Query
-
     qbytes = qvec.astype("float32").tobytes()
     q = (
         Query(f'*=>[KNN {k} @embedding $vec AS score]')
@@ -45,9 +44,27 @@ def _knn_search(r: redis.Redis, qvec: np.ndarray, k: int) -> List[Dict[str, Any]
         .paging(0, k)
         .dialect(2)
     )
+
+    try:
+        info = r.ft(INDEX_NAME).info()
+        attrs = info.get("attributes") or info.get("fields") or "n/a"
+        log.info("kb_index_info", index=INDEX_NAME, attributes=attrs)
+    except Exception as e:
+        log.error(
+            "kb_index_missing_or_invalid",
+            error=str(e),
+            redis_url=REDIS_URL,
+            index=INDEX_NAME,
+        )
+        raise RuntimeError(
+            f"RediSearch index '{INDEX_NAME}' not found (did you run tools/build_kb_redis.py? "
+            "Is Redis Stack running and REDIS_URL pointing to it?)"
+        ) from e
+
     res = r.ft(INDEX_NAME).search(q, query_params={"vec": qbytes})
+
     out: List[Dict[str, Any]] = []
-    for doc in res.docs:
+    for doc in getattr(res, "docs", []):
         out.append({"source": doc.source, "text": doc.text, "score": float(doc.score)})
     return out
 
@@ -72,6 +89,7 @@ class KnowledgeAgentRedis:
         t0 = time.time()
 
         qv = _embed_query(message)
+        log.info("kb_embed", dim=int(qv.shape[1]), top_k=TOP_K)
         hits = _knn_search(self.r, qv, TOP_K)
 
         user, sources = _build_prompt(hits, message)
