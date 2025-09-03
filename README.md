@@ -22,6 +22,8 @@ The stack includes:
 
 - Conversation view + sources
 - Multi-conversation sidebar
+<img width="1118" height="711" alt="Screenshot 2025-09-03 at 18 07 25" src="https://github.com/user-attachments/assets/4a8afbf7-3d7a-4fbc-ad26-266acd6ba239" />
+
 
 ---
 
