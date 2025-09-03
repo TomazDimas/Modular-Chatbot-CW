@@ -44,3 +44,4 @@ yarn-error.log*
 # --- Kubernetes / Compose ---
 secrets/*.yaml
 secrets.yaml
+k8s/secrets.yaml
