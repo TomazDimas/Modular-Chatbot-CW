@@ -5,9 +5,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY app/backend/requirements.txt /app/requirements.txt
+COPY requirements.txt /app/requirements.txt
 RUN apt-get update && apt-get install -y build-essential \
- && pip install --no-cache-dir -r /app/requirements.txt
+  && pip install --no-cache-dir -r /app/requirements.txt
 
 COPY . /app
 
